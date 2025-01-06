@@ -1,12 +1,17 @@
+import re
 import telebot
 import asyncio
-import re
-from telebot.async_telebot import AsyncTeleBot
+from datetime import datetime
 from difflib import SequenceMatcher
+from telebot.async_telebot import AsyncTeleBot
 
 
 
-bot = AsyncTeleBot('TOKEN')
+kgb = AsyncTeleBot('TOKEN')
+
+
+# Saving time at the moment of bot start
+start_time = datetime.utcnow()
 
 
 
@@ -15,7 +20,7 @@ async def is_user_admin(chat_id, user_id):
     admin_statuses = ["creator", "administrator"]
     if user_id == "YOUR_ID": # God mode hehe:3
         return 1
-    result = await bot.get_chat_member(chat_id, user_id)
+    result = await kgb.get_chat_member(chat_id, user_id)
     if result.status in admin_statuses:
         return 1
     return 0
@@ -23,7 +28,7 @@ async def is_user_admin(chat_id, user_id):
 
 
 # Adding a user to the users monitoring list
-@bot.message_handler(commands=['add_user'])
+@kgb.message_handler(commands=['add_user'])
 async def add_user(message):
     chat_id = message.chat.id
     user_id = message.from_user.id
@@ -31,12 +36,12 @@ async def add_user(message):
 
     # Checking a user for administrator rights
     if result == 0:
-        await bot.reply_to(message, "You do not have permission to run this command.")
+        await kgb.reply_to(message, "You do not have permission to run this command.")
         return
     # Checking a command for an argument
     args = message.text.split()
     if len(args) < 2:
-        await bot.reply_to(message, "Please enter a user ID. \nExample: /add_user 123123123")
+        await kgb.reply_to(message, "Please enter a user ID. \nExample: /add_user 123123123")
         return
 
     user_to_add = args[1]
@@ -49,7 +54,7 @@ async def add_user(message):
 
         # Sending an error message that the user is already on the list
         if user_to_add in (user.lower() for user in existing_users):
-            await bot.reply_to(message, f"The user ID '{user_to_add}' already exists in the list.")
+            await kgb.reply_to(message, f"The user ID '{user_to_add}' already exists in the list.")
             return
 
         # Adding a user to the list
@@ -57,14 +62,14 @@ async def add_user(message):
             file.write(f'\n{user_to_add}')
 
         # Sending a message that the user has been successfully added to the list
-        await bot.reply_to(message, f"User ID '{user_to_add}' added.")
+        await kgb.reply_to(message, f"User ID '{user_to_add}' added.")
     # Sending an error message
     except Exception as e:
-        await bot.reply_to(message, f"An error occurred: {str(e)}")
+        await kgb.reply_to(message, f"An error occurred: {str(e)}")
 
 
 # Adding a swear word to the list of swear words
-@bot.message_handler(commands=['add_swear'])
+@kgb.message_handler(commands=['add_swear'])
 async def add_swear(message):
     chat_id = message.chat.id
     user_id = message.from_user.id
@@ -72,12 +77,12 @@ async def add_swear(message):
 
     # Checking a user for administrator rights
     if result == 0:
-        await bot.reply_to(message, "You do not have permission to run this command.")
+        await kgb.reply_to(message, "You do not have permission to run this command.")
         return
     # Checking a command for an argument
     args = message.text.split()
     if len(args) < 2:
-        await bot.reply_to(message, "Please enter a swear word. \nExample: /add_swear FUCK")
+        await kgb.reply_to(message, "Please enter a swear word. \nExample: /add_swear FUCK")
         return
 
     swear_word_to_add = args[1].lower()
@@ -90,7 +95,7 @@ async def add_swear(message):
 
         # Sending an error message that the swear word is already on the list
         if swear_word_to_add in (word.lower() for word in existing_swears):
-            await bot.reply_to(message, f"The swear word '{swear_word_to_add}' already exists in the list.")
+            await kgb.reply_to(message, f"The swear word '{swear_word_to_add}' already exists in the list.")
             return
 
         # Adding a swear word to the list
@@ -98,14 +103,14 @@ async def add_swear(message):
             file.write(f'\n{swear_word_to_add}')
 
         # Sending a message that the swear word has been successfully added to the list
-        await bot.reply_to(message, f"Swear word '{swear_word_to_add}' added.")
+        await kgb.reply_to(message, f"Swear word '{swear_word_to_add}' added.")
     # Sending an error message
     except Exception as e:
-        await bot.reply_to(message, f"An error occurred: {str(e)}")
+        await kgb.reply_to(message, f"An error occurred: {str(e)}")
 
 
 # Removing a user from the users monitoring list
-@bot.message_handler(commands=['remove_user'])
+@kgb.message_handler(commands=['remove_user'])
 async def remove_user(message):
     chat_id = message.chat.id
     user_id = message.from_user.id
@@ -113,12 +118,12 @@ async def remove_user(message):
 
     # Checking a user for administrator rights
     if result == 0:
-        await bot.reply_to(message, "You do not have permission to run this command.")
+        await kgb.reply_to(message, "You do not have permission to run this command.")
         return
     # Checking a command for an argument
     args = message.text.split()
     if len(args) < 2:
-        await bot.reply_to(message, "Please enter user ID. \nExample: /remove_user 123123123")
+        await kgb.reply_to(message, "Please enter user ID. \nExample: /remove_user 123123123")
         return
 
     user_id_to_remove = args[1]
@@ -136,17 +141,17 @@ async def remove_user(message):
                     file.write(user)
 
         # Sending a message that the user has been successfully removed from the list
-        await bot.reply_to(message, f"User ID: {user_id_to_remove} has been removed.")
+        await kgb.reply_to(message, f"User ID: {user_id_to_remove} has been removed.")
     # Sending an error message that the file with the list of users was not found
     except FileNotFoundError:
-        await bot.reply_to(message, "User list not found.")
+        await kgb.reply_to(message, "User list not found.")
     # Sending an error message
     except Exception as e:
-        await bot.reply_to(message, f"An error occurred: {str(e)}")
+        await kgb.reply_to(message, f"An error occurred: {str(e)}")
 
 
 # Removing a swear word from the list of swear words
-@bot.message_handler(commands=['remove_swear'])
+@kgb.message_handler(commands=['remove_swear'])
 async def remove_swear(message):
     chat_id = message.chat.id
     user_id = message.from_user.id
@@ -154,12 +159,12 @@ async def remove_swear(message):
 
     # Checking a user for administrator rights
     if result == 0:
-        await bot.reply_to(message, "You do not have permission to run this command.")
+        await kgb.reply_to(message, "You do not have permission to run this command.")
         return
     # Checking a command for an argument
     args = message.text.split()
     if len(args) < 2:
-        await bot.reply_to(message, "Please enter a swear word. \nExample: /remove_swear FUCK")
+        await kgb.reply_to(message, "Please enter a swear word. \nExample: /remove_swear FUCK")
         return
 
     swear_word_to_remove = args[1]
@@ -177,17 +182,33 @@ async def remove_swear(message):
                     file.write(swear)
 
         # Sending a message that the swear word has been successfully removed from the list
-        await bot.reply_to(message, f"Swear word '{swear_word_to_remove}' removed.")
+        await kgb.reply_to(message, f"Swear word '{swear_word_to_remove}' removed.")
     # Sending an error message that the swear words list file was not found
     except FileNotFoundError:
-        await bot.reply_to(message, "Swearing list not found.")
+        await kgb.reply_to(message, "Swearing list not found.")
     # Sending an error message
     except Exception as e:
-        await bot.reply_to(message, f"An error occurred: {str(e)}")
+        await kgb.reply_to(message, f"An error occurred: {str(e)}")
+
+
+# Command to find out how long the bot has been running
+@kgb.message_handler(commands=['uptime'])
+async def send_uptime(message):
+    current_time = datetime.utcnow()
+    uptime_duration = current_time - start_time
+
+    # Getting days hours and minutes from bot running time
+    days = uptime_duration.days
+    hours, remainder = divmod(uptime_duration.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Formatting and sending a message to a user
+    uptime_str = f"{days} days, {hours} hours, {minutes} minutes."
+    await kgb.send_message(message.chat.id, f'The bot has been running for: \n{uptime_str}')
 
 
 # Function for searching and removing swear words from users in the monitoring list
-@bot.message_handler(func=lambda message: True)
+@kgb.message_handler(func=lambda message: True)
 async def checking_messages(message):
     text = message.text
     user_id = str(message.from_user.id)
@@ -214,7 +235,7 @@ async def checking_messages(message):
                     # If the match is greater than or equal to 60%, then we delete the user’s message
                     if similarity >= 0.6:
                         print(f"Message removed, swearing '{swear}' word '{word}' similarity {similarity}")   # Debugging to the console
-                        await bot.delete_message(message.chat.id, message.id)
+                        await kgb.delete_message(message.chat.id, message.id)
                         return
     # Sending an error message that files were not found
     except FileNotFoundError as e:
@@ -227,4 +248,4 @@ async def checking_messages(message):
 # Running a bot
 if __name__ == '__main__':
     print("KGB bot is turned on!")
-    asyncio.run(bot.polling())
+    asyncio.run(kgb.polling())
