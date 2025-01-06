@@ -217,11 +217,13 @@ async def checking_messages(message):
 
     # Handling errors and searching/removing swear words from users from the monitoring list
     try:
-        # Reading files with a list of users and swear words
+        # Reading files with a list of users, curses and exceptions
         with open("swearing.txt", "r") as swear_content:
             curses = swear_content.read().split()
         with open("users.txt", "r") as user_content:
             users_check = user_content.read().split()
+        with open("exceptions.txt", "r") as exceptions_content:
+            exceptions = exceptions_content.read().split()
 
         print(f"Message checking: ID = {user_id}, Username = @{user_name}")  # Debugging to the console
 
@@ -234,6 +236,9 @@ async def checking_messages(message):
                     similarity = SequenceMatcher(None, word.lower(), swear.lower()).ratio()
                     # If the match is greater than or equal to 60%, then we delete the user’s message
                     if similarity >= 0.6:
+                        # If the word is in the exceptions, then ignore it.
+                        if word.lower() in exceptions:
+                            continue
                         print(f"Message removed, swearing '{swear}' word '{word}' similarity {similarity}")   # Debugging to the console
                         await kgb.delete_message(message.chat.id, message.id)
                         return
