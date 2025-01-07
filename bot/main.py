@@ -1,6 +1,7 @@
 import re
 import telebot
 import asyncio
+import fortune
 from datetime import datetime
 from difflib import SequenceMatcher
 from telebot.async_telebot import AsyncTeleBot
@@ -25,6 +26,14 @@ async def is_user_admin(chat_id, user_id):
         return 1
     return 0
 
+
+
+# Sending a quote
+@kgb.message_handler(commands=['quote'])
+async def quote(message):
+    fortun = fortune.get_random_fortune('quotes.txt')
+    
+    await kgb.reply_to(message,f'```{fortun}```')
 
 
 # Adding a user to the users monitoring list
