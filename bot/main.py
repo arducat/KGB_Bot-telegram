@@ -12,7 +12,7 @@ kgb = AsyncTeleBot('TOKEN')
 
 
 # Saving time at the moment of bot start
-start_time = datetime.utcnow()
+start_time = datetime.now(timezone.utc)
 
 
 
@@ -203,7 +203,7 @@ async def remove_swear(message):
 # Command to find out how long the bot has been running
 @kgb.message_handler(commands=['uptime'])
 async def send_uptime(message):
-    current_time = datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
     uptime_duration = current_time - start_time
 
     # Getting days hours and minutes from bot running time
