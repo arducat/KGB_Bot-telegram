@@ -9,8 +9,10 @@ if [[ -z $1 ]]; then
 fi
 
 while true; do
-  git pull >temp.log && python $1 2>>temp.log
+  git pull >temp.log && python3 $1 2>>temp.log
   lastcode=$?
+  cat temp.log > temp2.log
+
 
   if [[ $lastcode = 0 ]]; then
     echo "$1 completed without errors. Turning off..."

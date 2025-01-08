@@ -2,13 +2,15 @@ import re
 import telebot
 import asyncio
 import fortune
+
+from os import getenv
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from telebot.async_telebot import AsyncTeleBot
 
 
 
-kgb = AsyncTeleBot('TOKEN')
+kgb = AsyncTeleBot(getenv('TOKEN', ''))
 
 
 # Saving time at the moment of bot start

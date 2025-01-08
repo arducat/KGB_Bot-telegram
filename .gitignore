@@ -1,0 +1,8 @@
+env/
+bot/__pycache__/
+__pycache__/
+data/
+.env
+lib/
+temp.log
+temp2.log
