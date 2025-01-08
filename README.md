@@ -12,5 +12,5 @@ Once an obscenity is found, the user's message will be deleted.
 <br />
 There is also a function called quotes, 
 Which takes a random quote from the quotes.txt file and sends it to the user.  
-<bt />
+<bt />  
 The uptime command shows the bot's operating time.
