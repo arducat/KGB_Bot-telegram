@@ -2,7 +2,7 @@ import re
 import telebot
 import asyncio
 import fortune
-from datetime import datetime
+from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from telebot.async_telebot import AsyncTeleBot
 
