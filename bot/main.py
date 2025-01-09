@@ -35,7 +35,7 @@ async def is_user_admin(chat_id, user_id):
 async def quote(message):
     fortun = fortune.get_random_fortune('quotes.txt')
     
-    await kgb.reply_to(message,f'```{fortun}```')
+    await kgb.reply_to(message,f'`{fortun}`')
 
 
 # Adding a user to the users monitoring list
