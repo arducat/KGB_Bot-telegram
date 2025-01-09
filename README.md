@@ -1,8 +1,6 @@
 # KGB_Bot-telegram
-KGB Bot for telegram  
-<br />
-## This bot has the following features:  
-<br />
+The one and only KGB bot for telegram!
+## This bot has the following features:
 1. The `uptime` command to determine the continuous operation time of the bot.  
 2. The `quote` command sends a random quote from the quotes.txt file.  
 3. The `add_user` command adds a user for monitoring to the users.txt file.  
@@ -13,7 +11,5 @@ KGB Bot for telegram
 If the user is on the monitoring list, the bot checks each word in their message.  
 If the word looks like a swear word from the swearing list, the bot checks if the word is on the exception list.  
 If the word is on the exception list, the bot does nothing, and if the word is a swear word, user's message is deleted.
-<br />
-## Important note!  
-<br />
+## Important note!
 The quotes.txt, swearing.txt, users.txt and exceptions.txt files must be created manually in advance!
