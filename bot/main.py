@@ -2,6 +2,10 @@ import re
 import telebot
 import asyncio
 import fortune
+import json
+import random
+import logging
+import sys
 
 from os import getenv
 from datetime import datetime, timezone
@@ -12,9 +16,26 @@ from telebot.async_telebot import AsyncTeleBot
 
 kgb = AsyncTeleBot(getenv('TOKEN', ''))
 
+# Logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Saving time at the moment of bot start
 start_time = datetime.now(timezone.utc)
+
+db_file = "db.json"
+
+def load_db():
+    try:
+        with open(db_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+def save_db(db):
+    with open(db_file, "w", encoding="utf-8") as f:
+        json.dump(db, f, ensure_ascii=False, indent=4)
+
+db = load_db()
 
 
 
@@ -28,6 +49,67 @@ async def is_user_admin(chat_id, user_id):
         return 1
     return 0
 
+
+def find_best_match(question):
+    question = question.lower()
+    best_match = None
+    best_ratio = 0.5
+    
+    logging.info(f"Finding an answer to the question: {question}")
+    
+    for item in db:
+        ratio = SequenceMatcher(None, question, item["question"]).ratio()
+        logging.info(f"Comparison with: {item['question']} (match {ratio:.2f})")
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_match = item
+        elif ratio == best_ratio and best_match:
+            best_match = random.choice([best_match, item])
+    
+    if best_match:
+        logging.info(f"Selected answer: {best_match['answer']} (match {best_ratio:.2f})")
+    else:
+        logging.info("No suitable answer was found.")
+    
+    return best_match
+    
+def is_duplicate(question, answer):
+    question = question.lower()
+    answer = answer.strip()
+    for item in db:
+        if SequenceMatcher(None, question, item["question"]).ratio() > 0.9 and SequenceMatcher(None, answer, item["answer"]).ratio() > 0.9:
+            return True
+    return False
+    
+@kgb.message_handler(commands=["teach"])
+async def terach(message):
+    if "=" not in message.text:
+        await kgb.reply_to(message, "Usage: /teach Question=Answer")
+        return
+    
+    _, data = message.text.split("/teach", 1)
+    question, answer = data.strip().split("=", 1)
+    question = question.strip().lower()
+    answer = answer.strip()
+    
+    if not is_duplicate(question, answer):
+        db.append({"question": question, "answer": answer})
+        save_db(db)
+        logging.info(f"A new pair has been added: {question} = {answer}")
+        await kgb.reply_to(message, "Got it!")
+    else:
+        await kgb.reply_to(message, "Such a question-answer pair already exists.")
+        
+@kgb.message_handler(commands=["ask"])
+async def ask(message):
+    _, question = message.text.split("/ask", 1)
+    question = question.strip().lower()
+    best_match = find_best_match(question)
+    
+    if best_match:
+        await kgb.reply_to(message, best_match["answer"])
+    else:
+        await kgb.reply_to(message, "I don't know the answer to that.")
 
 
 # Sending a quote
@@ -79,47 +161,6 @@ async def add_user(message):
         await kgb.reply_to(message, f"An error occurred: {str(e)}")
 
 
-# Adding a swear word to the list of swear words
-@kgb.message_handler(commands=['add_swear'])
-async def add_swear(message):
-    chat_id = message.chat.id
-    user_id = message.from_user.id
-    result = await is_user_admin(chat_id, user_id)
-
-    # Checking a user for administrator rights
-    if result == 0:
-        await kgb.reply_to(message, "You do not have permission to run this command.")
-        return
-    # Checking a command for an argument
-    args = message.text.split()
-    if len(args) < 2:
-        await kgb.reply_to(message, "Please enter a swear word. \nExample: /add_swear FUCK")
-        return
-
-    swear_word_to_add = args[1].lower()
-    print(f"Attempting to add a swear word: {swear_word_to_add}") # Debugging to the console
-
-    # Handling errors and adding swear word to the list
-    try:
-        with open('swearing.txt', 'r') as file:
-            existing_swears = file.read().splitlines()
-
-        # Sending an error message that the swear word is already on the list
-        if swear_word_to_add in (word.lower() for word in existing_swears):
-            await kgb.reply_to(message, f"The swear word '{swear_word_to_add}' already exists in the list.")
-            return
-
-        # Adding a swear word to the list
-        with open('swearing.txt', 'a') as file:
-            file.write(f'\n{swear_word_to_add}')
-
-        # Sending a message that the swear word has been successfully added to the list
-        await kgb.reply_to(message, f"Swear word '{swear_word_to_add}' added.")
-    # Sending an error message
-    except Exception as e:
-        await kgb.reply_to(message, f"An error occurred: {str(e)}")
-
-
 # Removing a user from the users monitoring list
 @kgb.message_handler(commands=['remove_user'])
 async def remove_user(message):
@@ -161,47 +202,6 @@ async def remove_user(message):
         await kgb.reply_to(message, f"An error occurred: {str(e)}")
 
 
-# Removing a swear word from the list of swear words
-@kgb.message_handler(commands=['remove_swear'])
-async def remove_swear(message):
-    chat_id = message.chat.id
-    user_id = message.from_user.id
-    result = await is_user_admin(chat_id, user_id)
-
-    # Checking a user for administrator rights
-    if result == 0:
-        await kgb.reply_to(message, "You do not have permission to run this command.")
-        return
-    # Checking a command for an argument
-    args = message.text.split()
-    if len(args) < 2:
-        await kgb.reply_to(message, "Please enter a swear word. \nExample: /remove_swear FUCK")
-        return
-
-    swear_word_to_remove = args[1]
-    print(f"Removing a swear word: {swear_word_to_remove}")  # Debugging to the console
-
-    # Handling errors and removing swear word from the list
-    try:
-        with open('swearing.txt', 'r') as file:
-            swearing = file.readlines()
-
-        # Removing a swear word from the list
-        with open('swearing.txt', 'w') as file:
-            for swear in swearing:
-                if swear.strip() != swear_word_to_remove:
-                    file.write(swear)
-
-        # Sending a message that the swear word has been successfully removed from the list
-        await kgb.reply_to(message, f"Swear word '{swear_word_to_remove}' removed.")
-    # Sending an error message that the swear words list file was not found
-    except FileNotFoundError:
-        await kgb.reply_to(message, "Swearing list not found.")
-    # Sending an error message
-    except Exception as e:
-        await kgb.reply_to(message, f"An error occurred: {str(e)}")
-
-
 # Command to find out how long the bot has been running
 @kgb.message_handler(commands=['uptime'])
 async def send_uptime(message):
@@ -228,37 +228,26 @@ async def checking_messages(message):
 
     # Handling errors and searching/removing swear words from users from the monitoring list
     try:
-        # Reading files with a list of users, curses and exceptions
-        with open("swearing.txt", "r") as swear_content:
-            curses = swear_content.read().split()
+        # Reading files with a list of users
         with open("users.txt", "r") as user_content:
             users_check = user_content.read().split()
-        with open("exceptions.txt", "r") as exceptions_content:
-            exceptions = exceptions_content.read().split()
 
-        print(f"Message checking: ID = {user_id}, Username = @{user_name}")  # Debugging to the console
+        logging.info(f"Message checking: ID = {user_id}, Username = @{user_name}")  # Debugging to the console
 
         # Searching for a user in the list of users to monitoring
         if user_id in users_check:
             # Searching for swear words in user's text
             for word in text_cleaning:
-                for swear in curses:
-                    # Comparison of a user's word from the text with a swear word from the list
-                    similarity = SequenceMatcher(None, word.lower(), swear.lower()).ratio()
-                    # If the match is greater than or equal to 60%, then we delete the user’s message
-                    if similarity >= 0.6:
-                        # If the word is in the exceptions, then ignore it.
-                        if word.lower() in exceptions:
-                            continue
-                        print(f"Message removed, swearing '{swear}' word '{word}' similarity {similarity}")   # Debugging to the console
-                        await kgb.delete_message(message.chat.id, message.id)
-                        return
+                if check(word):
+                    logging.info(f"Message removed, word '{word}', message {text_cleaning}")   # Debugging to the console
+                    await kgb.delete_message(message.chat.id, message.id)
+                    return
     # Sending an error message that files were not found
     except FileNotFoundError as e:
-        print(f"File not found: {str(e)}")
+        logging.info(f"File not found: {str(e)}")
     # Sending an error message
     except Exception as e:
-        print(f"An error occurred while checking messages: {str(e)}")
+        logging.info(f"An error occurred while checking messages: {str(e)}")
 
 
 # Running a bot
