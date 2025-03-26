@@ -22,6 +22,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Saving time at the moment of bot start
 start_time = datetime.now(timezone.utc)
 
+
+# Loads the question-and-answer database
 db_file = "db.json"
 
 def load_db():
@@ -50,6 +52,7 @@ async def is_user_admin(chat_id, user_id):
     return 0
 
 
+# Finds the most similar question from the database
 def find_best_match(question):
     question = question.lower()
     best_match = None
@@ -72,7 +75,9 @@ def find_best_match(question):
         logging.info("No suitable answer was found.")
     
     return best_match
-    
+
+
+# Checks a question-answer pair for duplicates
 def is_duplicate(question, answer):
     question = question.lower()
     answer = answer.strip()
@@ -80,7 +85,10 @@ def is_duplicate(question, answer):
         if SequenceMatcher(None, question, item["question"]).ratio() > 0.9 and SequenceMatcher(None, answer, item["answer"]).ratio() > 0.9:
             return True
     return False
-    
+
+
+
+# Command to add a new question-answer pair
 @kgb.message_handler(commands=["teach"])
 async def terach(message):
     if "=" not in message.text:
@@ -99,7 +107,9 @@ async def terach(message):
         await kgb.reply_to(message, "Got it!")
     else:
         await kgb.reply_to(message, "Such a question-answer pair already exists.")
-        
+
+
+# Command to ask the bot a question
 @kgb.message_handler(commands=["ask"])
 async def ask(message):
     _, question = message.text.split("/ask", 1)
