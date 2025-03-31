@@ -8,6 +8,7 @@ import logging
 import sys
 
 from os import getenv
+from antiswear import *
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from telebot.async_telebot import AsyncTeleBot
@@ -44,7 +45,7 @@ db = load_db()
 # User verification function for administrator rights
 async def is_user_admin(chat_id, user_id):
     admin_statuses = ["creator", "administrator"]
-    if user_id == "YOUR_ID": # God mode hehe:3
+    if str(user_id) == "YOUR_ID": # God mode hehe:3
         return 1
     result = await kgb.get_chat_member(chat_id, user_id)
     if result.status in admin_statuses:
