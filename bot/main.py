@@ -261,6 +261,7 @@ async def checking_messages(message):
         logging.info(f"An error occurred while checking messages: {str(e)}")
 
 
+
 # Running a bot
 if __name__ == '__main__':
     print("KGB bot is turned on!")
