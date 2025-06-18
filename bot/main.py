@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from telebot.async_telebot import AsyncTeleBot
 
+# preparing
+open("users.txt", "a").close() 
 
 
 kgb = AsyncTeleBot(getenv('TOKEN', ''))
